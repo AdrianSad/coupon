@@ -6,8 +6,12 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/coupons?replicaSet=rs0}
       auto-index-creation: false
     redis:
+      url: ${REDIS_URL:}
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
   threads:
     virtual:
       enabled: true

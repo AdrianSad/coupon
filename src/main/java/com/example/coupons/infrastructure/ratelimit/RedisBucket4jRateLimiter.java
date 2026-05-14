@@ -65,10 +65,29 @@ public class RedisBucket4jRateLimiter implements RateLimiter {
 @Configuration
 class RateLimiterBackend {
 
+    /**
+     * Single Lettuce client that respects host / port / password / SSL or a
+     * full redis URL. Hosted Redis providers (Upstash, Redis Cloud, etc.) all
+     * require AUTH + TLS, so we need more than the bare host+port pair.
+     * {@code spring.data.redis.url} wins if set (single source of truth for
+     * "rediss://default:pwd@host:port" connection strings).
+     */
     @Bean(destroyMethod = "shutdown")
-    RedisClient lettuceRedisClient(@Value("${spring.data.redis.host}") String host,
-                                   @Value("${spring.data.redis.port}") int port) {
-        return RedisClient.create(RedisURI.create(host, port));
+    RedisClient lettuceRedisClient(
+            @Value("${spring.data.redis.url:}") String url,
+            @Value("${spring.data.redis.host:localhost}") String host,
+            @Value("${spring.data.redis.port:6379}") int port,
+            @Value("${spring.data.redis.password:}") String password,
+            @Value("${spring.data.redis.ssl.enabled:false}") boolean ssl) {
+
+        if (url != null && !url.isBlank()) {
+            return RedisClient.create(RedisURI.create(url));
+        }
+        RedisURI.Builder b = RedisURI.builder().withHost(host).withPort(port).withSsl(ssl);
+        if (password != null && !password.isBlank()) {
+            b.withPassword(password.toCharArray());
+        }
+        return RedisClient.create(b.build());
     }
 
     @Bean(destroyMethod = "close")
