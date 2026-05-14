@@ -1,0 +1,22 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.factorypath
+.flattened-pom.xml
+*.log
+HELP.md
+build/
+out/
+.DS_Store
+
+# Local-only demo client; not part of the deliverable
+frontend/
+
+# Local commit-message scratch file
+.gitmsg

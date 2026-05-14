@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: coupons
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/coupons?replicaSet=rs0}
+      auto-index-creation: false
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  port: 8080
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  health:
+    redis:
+      enabled: true
+    mongo:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+coupons:
+  geolocation:
+    base-url: ${GEO_IP_BASE_URL:http://ip-api.com}
+    cache-ttl-minutes: 10
+    skip-private-ips: true
+    fallback-country: ${GEO_IP_FALLBACK:}
+  rate-limit:
+    redeem:
+      capacity: 10
+      refill-tokens: 10
+      refill-period-seconds: 60
+  idempotency:
+    ttl-hours: 24
+    header-name: Idempotency-Key
+  cors:
+    # Override in prod via CORS_ALLOWED_ORIGINS=https://your-app.vercel.app,...
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5500,http://localhost:8080,http://127.0.0.1:8080}
+
+resilience4j:
+  retry:
+    instances:
+      ipApi:
+        max-attempts: 3
+        wait-duration: 200ms
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - java.io.IOException
+  circuitbreaker:
+    instances:
+      ipApi:
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+
+logging:
+  level:
+    root: INFO
+    com.example.coupons: INFO
+    org.springframework.data.mongodb.core.MongoTemplate: WARN
